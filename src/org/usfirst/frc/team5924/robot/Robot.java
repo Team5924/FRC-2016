@@ -44,11 +44,7 @@ public class Robot extends IterativeRobot {
     
     double intakeAutoPosition;
     double shooterAutoPosition;
-    
-    boolean crossingDefense;
-    
-    boolean moving;
-    
+
     /*
 	     * DS Buttons
     */
@@ -70,7 +66,7 @@ public class Robot extends IterativeRobot {
     
     int lowGoalPrepareButton       = 12;
     
-    double outtakeDuration = 25; // duration (in seconds) that the outtake ball pusher servo is extended before automatically retracted
+    double outtakeDuration = 25; // duration that the outtake ball pusher servo is extended before automatically retracted
     int servoOut;
     
     /**
@@ -91,25 +87,27 @@ public class Robot extends IterativeRobot {
         shooterLifter = new CANTalon(2);
         shooterLifter.changeControlMode(CANTalon.TalonControlMode.Position);
         shooterLifter.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot);
-        shooterLifter.setPID(6.0,0.008,0); 
+        shooterLifter.setPID(5.2,0.003,0); 
         //shooterLifter.setPID(3.0,0.0008,0); 
         
         intake = new CANTalon(3);
         intake.changeControlMode(CANTalon.TalonControlMode.Position);
         intake.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot);
-        intake.setPID(7.8,0.0003,0);
-        //intake.setPID(4,0.00003,0);
+        intake.setPID(4.9,0.0001,0);
+ 
         
         ballPusher = new Servo(9);
         
+        
+        
         shooterAdjust = false;
-        shooterLifterMin = 550.0;
-        shooterLifterMax = 890.0;
+        shooterLifterMin = 70.0;
+        shooterLifterMax = 407.0;
         shooterAutoPosition = 0.0;
 
         intakeAdjust = false;
-        intakeArmMin = 58.0;
-        intakeArmMax = 983.0;
+        intakeArmMin = 7.0;
+        intakeArmMax = 907.0;
         intakeAutoPosition = 0.0;
     }
    
@@ -136,24 +134,22 @@ public class Robot extends IterativeRobot {
     	
     	shooterAutoPosition = 0.0;
     	intakeAutoPosition = 0.0;
-    	
-    	
-    	
     }
  
     /**
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-
+    	
     	robotDrive.arcadeDrive(-driveStick.getRawAxis(1), -driveStick.getRawAxis(4));
         
         // outtake
-    	if(buttons.getRawButton(servoOuttakeButton)){ // outtake
+    	if(buttons.getRawButton(servoOuttakeButton)){
             ballPusher.set(1);
             servoOut = 1;
         }
         
+    	// shooter motor control
         if(buttons.getRawButton(shooterIntakeButton)){
             shooter.tankDrive(-0.7, -0.7);
             ballPusher.set(0);
@@ -161,42 +157,41 @@ public class Robot extends IterativeRobot {
             shooter.tankDrive(1, 1);
         }
         
-        
         if (buttons.getRawButton(drivePrepareButton)){
-        	intakeAutoPosition = 411.0;
-        	shooterAutoPosition = 710.0;
+        	intakeAutoPosition = intakeArmMin;
+        	shooterAutoPosition = 197.0;
         }else if (buttons.getRawButton(portcullisPrepareButton)){
-        	intakeAutoPosition = 933.0;
-        	shooterAutoPosition = 900.0;
+        	intakeAutoPosition = 906.0;
+        	shooterAutoPosition = 390.0;
         }else if (buttons.getRawButton(chevalDeFrisePrepareButton)){
-        	intakeAutoPosition = 735.0;
-        	shooterAutoPosition = 865.0;
+        	intakeAutoPosition = 906.0;
+        	shooterAutoPosition = 390.0;
         }else if (buttons.getRawButton(lowbarFwdButton)){
         	intakeAutoPosition = intakeArmMin;
-        	shooterAutoPosition = 880;
+        	shooterAutoPosition = 366;
         }else if (buttons.getRawButton(resetButton)){
         	intakeAutoPosition = 0.0;
         	shooterAutoPosition = 0.0;
         }else if(buttons.getRawButton(blockButton)){
         	// lift the intake and shooter to block shots
-        	intakeAutoPosition = 635;
-        	shooterAutoPosition = 520;
+        	intakeAutoPosition = 533;
+        	shooterAutoPosition = 85;
         }else if(buttons.getRawButton(intakePrepareButton)){
-        	 intakeAutoPosition = 580;
-        	 shooterAutoPosition = 860;
+        	 intakeAutoPosition = intakeArmMin;
+        	 shooterAutoPosition = 390;
         	 ballPusher.set(0);
         }else if(buttons.getRawButton(lowGoalPrepareButton)){
-        	intakeAutoPosition = 265;
-        	shooterAutoPosition = 820;
+        	intakeAutoPosition = intakeArmMin;
+        	shooterAutoPosition = 311;
         }else if(buttons.getRawButton(highGoalPrepareButton)){
-        	intakeAutoPosition = 265;
-        	shooterAutoPosition = 520;
+        	intakeAutoPosition = intakeArmMin;
+        	shooterAutoPosition = 70;
         }
         
         
         
         // *********************************
-        //   Shooter Dart Actuator Control
+        //   Shooter - Dart Actuator Control
         // *********************************
         shooterPosition = shooterLifter.getPosition();
         double shooterPosControl = buttons.getY();
@@ -284,7 +279,7 @@ public class Robot extends IterativeRobot {
 	            // Make sure the shooter does not go above the maximum allowed position 
 	            if (intakePosition < intakeArmMax){
 	                if(intakeControl < -0.6){
-	                    intake.set(intakePosition + 70);
+	                    intake.set(intakePosition + 65);
 	                }else{
 	                    intake.set(intakePosition + 15);
 	                }
@@ -302,7 +297,7 @@ public class Robot extends IterativeRobot {
 	            // Make sure the shooter does not go below the minimum allowed position 
 	            if (intakePosition > intakeArmMin){
 	                if(intakeControl > .6){
-	                    intake.set(intakePosition - 70);
+	                    intake.set(intakePosition - 65);
 	                }else {
 	                    intake.set(intakePosition - 15);
 	                }
@@ -329,9 +324,9 @@ public class Robot extends IterativeRobot {
         	servoOut = 0; 
         }
         
-        System.out.println("shooter position: " + shooterLifter.getPosition());
-        System.out.println("intake position: " + intake.getPosition());
-    }
+        System.out.println("shooter : " + shooterLifter.getPosition() + "  intake :  " + intake.getPosition());
+ 
+   }
    
     /**
      * This function is called periodically during test mode
