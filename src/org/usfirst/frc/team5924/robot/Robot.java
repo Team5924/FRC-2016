@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -28,7 +29,7 @@ public class Robot extends IterativeRobot {
     
     CANTalon intake;
     
-    Servo ballPusher;
+    Servo outtakeServo;
     
     double shooterPosition;
     boolean   shooterAdjust;
@@ -46,24 +47,19 @@ public class Robot extends IterativeRobot {
     double shooterAutoPosition;
 
     /*
-	     * DS Buttons
+	     * DS Button Assignments
     */
-    int blockButton                = 1;
-    
-    int highGoalPrepareButton      = 2;
-    
+    int blockButton                = 1;    
+    int highGoalPrepareButton      = 2;    
     int servoOuttakeButton         = 3;
     int intakePrepareButton        = 4;
     int shooterOuttakeButton       = 5;
     int shooterIntakeButton        = 6;
     int portcullisPrepareButton    = 7;
     int chevalDeFrisePrepareButton = 8;
-    int drivePrepareButton         = 9;
-    
-    int resetButton                = 10;
-    
-    int lowbarFwdButton            = 11;
-    
+    int drivePrepareButton         = 9;    
+    int resetButton                = 10;   
+    int lowbarFwdButton            = 11;    
     int lowGoalPrepareButton       = 12;
     
     double outtakeDuration = 25; // duration that the outtake ball pusher servo is extended before automatically retracted
@@ -96,9 +92,7 @@ public class Robot extends IterativeRobot {
         intake.setPID(4.9,0.0001,0);
  
         
-        ballPusher = new Servo(9);
-        
-        
+        outtakeServo = new Servo(9);
         
         shooterAdjust = false;
         shooterLifterMin = 70.0;
@@ -129,7 +123,7 @@ public class Robot extends IterativeRobot {
      * This function is called once each time the robot enters tele-operated mode
      */
     public void teleopInit(){
-    	ballPusher.set(0);
+    	outtakeServo.set(0); // retract outtake servo
     	servoOut = 0;
     	
     	shooterAutoPosition = 0.0;
@@ -143,20 +137,12 @@ public class Robot extends IterativeRobot {
     	
     	robotDrive.arcadeDrive(-driveStick.getRawAxis(1), -driveStick.getRawAxis(4));
         
-        // outtake
-    	if(buttons.getRawButton(servoOuttakeButton)){
-            ballPusher.set(1);
-            servoOut = 1;
-        }
         
-    	// shooter motor control
-        if(buttons.getRawButton(shooterIntakeButton)){
-            shooter.tankDrive(-0.7, -0.7);
-            ballPusher.set(0);
-        }else if(buttons.getRawButton(shooterOuttakeButton)){
-            shooter.tankDrive(1, 1);
-        }
-        
+        // *********************************
+        //   Driver Station Buttons
+        // *********************************
+    	
+    	// shooter and intake control
         if (buttons.getRawButton(drivePrepareButton)){
         	intakeAutoPosition = intakeArmMin;
         	shooterAutoPosition = 197.0;
@@ -179,7 +165,7 @@ public class Robot extends IterativeRobot {
         }else if(buttons.getRawButton(intakePrepareButton)){
         	 intakeAutoPosition = intakeArmMin;
         	 shooterAutoPosition = 390;
-        	 ballPusher.set(0);
+        	 outtakeServo.set(0);
         }else if(buttons.getRawButton(lowGoalPrepareButton)){
         	intakeAutoPosition = intakeArmMin;
         	shooterAutoPosition = 311;
@@ -188,6 +174,19 @@ public class Robot extends IterativeRobot {
         	shooterAutoPosition = 70;
         }
         
+        // outtake servo control
+    	if(buttons.getRawButton(servoOuttakeButton)){
+            outtakeServo.set(1);
+            servoOut = 1;
+        }
+        
+    	// shooter motor control
+        if(buttons.getRawButton(shooterIntakeButton)){
+            shooter.tankDrive(-0.7, -0.7);
+            outtakeServo.set(0);
+        }else if(buttons.getRawButton(shooterOuttakeButton)){
+            shooter.tankDrive(1, 1);
+        }
         
         
         // *********************************
@@ -265,8 +264,10 @@ public class Robot extends IterativeRobot {
         intakePosition = intake.getPosition();
         double intakeControl = buttons.getX();
         
+        double intakeDeadband = 1.0;
+        
         if (intakeAutoPosition > 0.0){
-        	if (Math.abs(intakePosition - intakeAutoPosition) < 1.0){
+        	if (Math.abs(intakePosition - intakeAutoPosition) < intakeDeadband){
         		intakeAutoPosition = 0.0;
         	}else{
         		intake.set(intakeAutoPosition);
@@ -320,12 +321,20 @@ public class Robot extends IterativeRobot {
         	servoOut++;
         }else if(servoOut == outtakeDuration){
         	// retract the ball pusher servo
-        	ballPusher.set(0);
+        	outtakeServo.set(0);
         	servoOut = 0; 
         }
         
+        // *********************************
+        //   Debugging
+        // *********************************
+        
         System.out.println("shooter : " + shooterLifter.getPosition() + "  intake :  " + intake.getPosition());
- 
+        
+        
+        // SmartDashboard
+        SmartDashboard.putNumber("shooter position", shooterLifter.getPosition());
+        SmartDashboard.putNumber("intake arm position", intake.getPosition());
    }
    
     /**
