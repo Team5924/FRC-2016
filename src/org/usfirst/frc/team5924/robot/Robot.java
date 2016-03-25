@@ -49,7 +49,7 @@ public class Robot extends IterativeRobot {
     /*
 	     * DS Button Assignments
     */
-    int blockButton                = 1;    
+    int lowGoalPrepareButton       = 1;    
     int highGoalPrepareButton      = 2;    
     int servoOuttakeButton         = 3;
     int intakePrepareButton        = 4;
@@ -60,7 +60,9 @@ public class Robot extends IterativeRobot {
     int drivePrepareButton         = 9;    
     int resetButton                = 10;   
     int lowbarFwdButton            = 11;    
-    int lowGoalPrepareButton       = 12;
+    //int lowGoalPrepareButton       = 12;
+    
+    int autoDuration = 50;
     
     double outtakeDuration = 25; // duration that the outtake ball pusher servo is extended before automatically retracted
     int servoOut;
@@ -96,20 +98,32 @@ public class Robot extends IterativeRobot {
         
         shooterAdjust = false;
         shooterLifterMin = 70.0;
-        shooterLifterMax = 407.0;
+        shooterLifterMax = 375.0;
         shooterAutoPosition = 0.0;
 
         intakeAdjust = false;
         intakeArmMin = 7.0;
         intakeArmMax = 907.0;
         intakeAutoPosition = 0.0;
+        
+        SmartDashboard.putNumber("Auto Duration: ", 0);
     }
    
     /**
      * This function is run once each time the robot enters autonomous mode
      */
     public void autonomousInit() {
+    	System.out.println("auto start");
     	
+    	int i = 667*5;
+    	
+    	while(i > 0){
+    		robotDrive.arcadeDrive(0.65, 0);
+    		i--;
+    		System.out.println("auto loop");
+    	}
+    	
+    	System.out.println("auto end");
     }
  
     /**
@@ -158,17 +172,17 @@ public class Robot extends IterativeRobot {
         }else if (buttons.getRawButton(resetButton)){
         	intakeAutoPosition = 0.0;
         	shooterAutoPosition = 0.0;
-        }else if(buttons.getRawButton(blockButton)){
+        }/*else if(buttons.getRawButton(blockButton)){
         	// lift the intake and shooter to block shots
         	intakeAutoPosition = 533;
         	shooterAutoPosition = 85;
-        }else if(buttons.getRawButton(intakePrepareButton)){
+        }*/else if(buttons.getRawButton(intakePrepareButton)){
         	 intakeAutoPosition = intakeArmMin;
         	 shooterAutoPosition = 390;
         	 outtakeServo.set(0);
         }else if(buttons.getRawButton(lowGoalPrepareButton)){
         	intakeAutoPosition = intakeArmMin;
-        	shooterAutoPosition = 311;
+        	shooterAutoPosition = 252; //
         }else if(buttons.getRawButton(highGoalPrepareButton)){
         	intakeAutoPosition = intakeArmMin;
         	shooterAutoPosition = 70;
@@ -185,7 +199,7 @@ public class Robot extends IterativeRobot {
             shooter.tankDrive(-0.7, -0.7);
             outtakeServo.set(0);
         }else if(buttons.getRawButton(shooterOuttakeButton)){
-            shooter.tankDrive(1, 1);
+            shooter.tankDrive(0.7, 0.7);
         }
         
         
