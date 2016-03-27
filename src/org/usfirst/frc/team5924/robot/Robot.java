@@ -2,18 +2,24 @@ package org.usfirst.frc.team5924.robot;
 
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.Ultrasonic;
+import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the IterativeRobot
  * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the manifest file in the resource
+ * creating this prm oject, you must also update the manifest file in the resource
  * directory.
  */
 public class Robot extends IterativeRobot {
@@ -57,15 +63,16 @@ public class Robot extends IterativeRobot {
     int shooterIntakeButton        = 6;
     int portcullisPrepareButton    = 7;
     int chevalDeFrisePrepareButton = 8;
-    int drivePrepareButton         = 9;    
+    int drivePrepareButton         = 9;   
     int resetButton                = 10;   
-    int lowbarFwdButton            = 11;    
-    //int lowGoalPrepareButton       = 12;
-    
-    int autoDuration = 50;
+    int lowbarFwdButton            = 11;
     
     double outtakeDuration = 25; // duration that the outtake ball pusher servo is extended before automatically retracted
     int servoOut;
+    
+    Ultrasonic mainUltrasonic;
+    DigitalOutput mainUltrasonicPing;
+    DigitalInput mainUltrasonicEcho;
     
     /**
      * This function is run when the robot is first started up and should be
@@ -98,32 +105,35 @@ public class Robot extends IterativeRobot {
         
         shooterAdjust = false;
         shooterLifterMin = 70.0;
-        shooterLifterMax = 375.0;
+        shooterLifterMax = 355.0; // prac bot was 375
         shooterAutoPosition = 0.0;
 
         intakeAdjust = false;
         intakeArmMin = 7.0;
         intakeArmMax = 907.0;
         intakeAutoPosition = 0.0;
+
+        mainUltrasonicPing = new DigitalOutput(5);
+        mainUltrasonicEcho = new DigitalInput(6);
+        mainUltrasonic = new Ultrasonic(mainUltrasonicPing, mainUltrasonicEcho);
+        mainUltrasonic.setAutomaticMode(true);
+        System.out.println("main ultrasonic: " + mainUltrasonic.getRangeInches());
         
-        SmartDashboard.putNumber("Auto Duration: ", 0);
+        // *********************
+        // SmartDashboard
+        // *********************
+        SmartDashboard.putNumber("Main Ultrasonic", mainUltrasonic.getRangeInches());
+        SmartDashboard.putNumber("Auto Duration", 0);
     }
    
     /**
      * This function is run once each time the robot enters autonomous mode
      */
     public void autonomousInit() {
-    	System.out.println("auto start");
+    	System.out.println("auto start"); 
+    	bdAuto();
     	
-    	int i = 667*5;
-    	
-    	while(i > 0){
-    		robotDrive.arcadeDrive(0.65, 0);
-    		i--;
-    		System.out.println("auto loop");
-    	}
-    	
-    	System.out.println("auto end");
+    	System.out.println("auto init end");
     }
  
     /**
@@ -172,17 +182,15 @@ public class Robot extends IterativeRobot {
         }else if (buttons.getRawButton(resetButton)){
         	intakeAutoPosition = 0.0;
         	shooterAutoPosition = 0.0;
-        }/*else if(buttons.getRawButton(blockButton)){
-        	// lift the intake and shooter to block shots
-        	intakeAutoPosition = 533;
-        	shooterAutoPosition = 85;
-        }*/else if(buttons.getRawButton(intakePrepareButton)){
+        }else if(buttons.getRawButton(intakePrepareButton)){
         	 intakeAutoPosition = intakeArmMin;
         	 shooterAutoPosition = 390;
         	 outtakeServo.set(0);
         }else if(buttons.getRawButton(lowGoalPrepareButton)){
         	intakeAutoPosition = intakeArmMin;
-        	shooterAutoPosition = 252; //
+        	shooterAutoPosition = 252;
+        	shooter.tankDrive(-0.7, -0.7);
+        	outtakeServo.set(0);
         }else if(buttons.getRawButton(highGoalPrepareButton)){
         	intakeAutoPosition = intakeArmMin;
         	shooterAutoPosition = 70;
@@ -199,7 +207,7 @@ public class Robot extends IterativeRobot {
             shooter.tankDrive(-0.7, -0.7);
             outtakeServo.set(0);
         }else if(buttons.getRawButton(shooterOuttakeButton)){
-            shooter.tankDrive(0.7, 0.7);
+            shooter.tankDrive(1.0, 1.0);
         }
         
         
@@ -305,8 +313,7 @@ public class Robot extends IterativeRobot {
 	                System.out.println("Intake at Maximum");
 	            }
 	            
-	        }
-	        else if (intakeControl > .2){
+	        }else if (intakeControl > .2){
 	            intakeAdjust = true;
 	            
 	            // Make sure the shooter does not go below the minimum allowed position 
@@ -345,8 +352,6 @@ public class Robot extends IterativeRobot {
         
         System.out.println("shooter : " + shooterLifter.getPosition() + "  intake :  " + intake.getPosition());
         
-        
-        // SmartDashboard
         SmartDashboard.putNumber("shooter position", shooterLifter.getPosition());
         SmartDashboard.putNumber("intake arm position", intake.getPosition());
    }
@@ -358,7 +363,37 @@ public class Robot extends IterativeRobot {
         LiveWindow.run();
         
         System.out.println("shooter position: " + shooterLifter.getPosition());
-        System.out.println("intake position:" + intake.getPosition());
+        System.out.println("intake position: " + intake.getPosition());
     }
-   
+    
+    public void lowbarAuto(){
+    	shooterLifter.set(366);
+    	
+    	while(shooterLifter.getPosition() < 366){
+    		shooterLifter.set(366);
+    	}
+    	
+    	intake.set(intakeArmMin);
+    	
+    	int i = 667*5;
+    	
+    	while(i > 0){
+    		robotDrive.arcadeDrive(0.65, 0);
+    		i--;
+    		System.out.println("auto loop");
+    	}
+    }
+    
+    public void bdAuto(){
+    	intake.set(intakeArmMin);
+    	
+    	double i = 667*88.0;
+    	
+    	while(i > 0.0){
+    		robotDrive.arcadeDrive(0.8, 0);
+    		i-=1.0;
+    	}
+    	
+    	SmartDashboard.putBoolean("bd auto", true);
+    }
 }
