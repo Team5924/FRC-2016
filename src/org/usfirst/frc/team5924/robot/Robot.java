@@ -366,6 +366,7 @@ public class Robot extends IterativeRobot {
         System.out.println("intake position: " + intake.getPosition());
     }
     
+    // autonomous mode for lowbar
     public void lowbarAuto(){
     	shooterLifter.set(366);
     	
@@ -384,6 +385,8 @@ public class Robot extends IterativeRobot {
     	}
     }
     
+    
+    // autonomous mode for category B & D defenses
     public void bdAuto(){
     	intake.set(intakeArmMin);
     	
